@@ -1,5 +1,6 @@
 <script lang="ts">
-  import type { BodyAttrs, Nullable, SupportedImage, ZoomProps } from '$lib/types.js';
+  import type { IModalState, Nullable, SupportedImage, ZoomProps } from '$lib/types.js';
+  import { default_body_attrs, IMAGE_QUERY, ModalState } from '$lib/constants.js';
   import {
     generate_id,
     get_dialog_container,
@@ -19,36 +20,6 @@
 
   // ==================================================
 
-  /**
-   * The selector query we use to find and track the image
-   */
-  const IMAGE_QUERY = ['img', '[role="img"]', '[data-zoom]']
-    .map((x) => `${x}:not([aria-hidden="true"])`)
-    .join(',');
-
-  /**
-   * Helps keep track of some key `<body>` attributes
-   * so we can remove and re-add them when disabling and
-   * re-enabling body scrolling
-   */
-  const default_body_attrs: BodyAttrs = {
-    overflow: '',
-    width: ''
-  };
-
-  // ==================================================
-
-  const ModalState = Object.freeze({
-    LOADED: 'LOADED',
-    LOADING: 'LOADING',
-    UNLOADED: 'UNLOADED',
-    UNLOADING: 'UNLOADING'
-  });
-
-  type IModalState = (typeof ModalState)[keyof typeof ModalState];
-
-  // ==================================================
-
   let {
     a11y_name_button_unzoom = 'Minimize image',
     a11y_name_button_zoom = 'Expand image',
@@ -61,6 +32,7 @@
     is_zoomed,
     on_zoom_change,
     wrap_element = 'div',
+    zoom_content,
     zoom_margin = 0
   }: ZoomProps = $props();
 
@@ -431,6 +403,51 @@
   }
 </script>
 
+{#snippet modal_img()}
+  <img
+    alt={img_alt}
+    src={img_src}
+    srcset={img_el?.srcset}
+    sizes={img_el?.sizes}
+    data-smiz-modal-img=""
+    id={id_modal_img}
+    style={style_modal_img_string}
+    width={style_modal_img_obj.width}
+    height={style_modal_img_obj.height}
+    bind:this={ref_modal_img}
+  />
+{/snippet}
+
+{#snippet modal_button_unzoom()}
+  <button
+    aria-label={a11y_name_button_unzoom}
+    data-smiz-btn-unzoom=""
+    onclick={handle_unzoom_btn_click}
+    type="button"
+    class={class_button_unzoom}
+  >
+    {#if icon_unzoom}
+      {@render icon_unzoom()}
+    {:else}
+      <ICompress />
+    {/if}
+  </button>
+{/snippet}
+
+{#snippet modal_content()}
+  {#if zoom_content}
+    {@render zoom_content({
+      modal_state,
+      img: modal_img,
+      on_unzoom: handle_unzoom,
+      button_unzoom: modal_button_unzoom
+    })}
+  {:else}
+    {@render modal_img()}
+    {@render modal_button_unzoom()}
+  {/if}
+{/snippet}
+
 <svelte:element this={wrap_element} aria-owns={id_modal} data-smiz="">
   <div
     data-smiz-content={data_content_state}
@@ -470,31 +487,7 @@
     >
       <div data-smiz-modal-overlay={data_overlay_state}></div>
       <div data-smiz-modal-content="" bind:this={ref_modal_content}>
-        <img
-          alt={img_alt}
-          src={img_src}
-          srcset={img_el?.srcset}
-          sizes={img_el?.sizes}
-          data-smiz-modal-img=""
-          id={id_modal_img}
-          style={style_modal_img_string}
-          width={style_modal_img_obj.width}
-          height={style_modal_img_obj.height}
-          bind:this={ref_modal_img}
-        />
-        <button
-          aria-label={a11y_name_button_unzoom}
-          data-smiz-btn-unzoom=""
-          onclick={handle_unzoom_btn_click}
-          type="button"
-          class={class_button_unzoom}
-        >
-          {#if icon_unzoom}
-            {@render icon_unzoom()}
-          {:else}
-            <ICompress />
-          {/if}
-        </button>
+        {@render modal_content()}
       </div>
     </dialog>
   {/if}

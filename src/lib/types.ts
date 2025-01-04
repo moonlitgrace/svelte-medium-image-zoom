@@ -1,8 +1,11 @@
 import type { Snippet } from 'svelte';
+import type { ModalState } from './constants.js';
 
 // ==================================================
 
 export type Nullable<T> = T | null;
+
+export type IModalState = (typeof ModalState)[keyof typeof ModalState];
 
 // ==================================================
 
@@ -25,5 +28,11 @@ export interface ZoomProps {
   is_zoomed?: boolean;
   on_zoom_change?: (value: boolean) => void;
   wrap_element?: 'div' | 'span';
+  zoom_content?: Snippet<[{
+    img: Snippet;
+    button_unzoom: Snippet;
+    modal_state: IModalState;
+    on_unzoom: () => void;
+  }]>;
   zoom_margin?: number;
 }
